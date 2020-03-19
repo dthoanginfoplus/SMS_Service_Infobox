@@ -13,7 +13,6 @@ exports.isPhoneNumber = function(phones){
                 phonesList.push(phone);
             } else {
                 try {
-                    await DataController.updateRegisteredMSG(1, 1, phone);
                     const row = await DataController.getRow(phone)
                     await DataController.insertMSG(row[0]);
                     await DataController.deleteMSG(row[0]);

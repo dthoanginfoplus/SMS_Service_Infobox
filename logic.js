@@ -10,18 +10,19 @@ const logger = require('./config/logger');
 
 otpFunction = async function () {
     return new Promise(async function (resolve, reject) {
-        console.log(new Date);
+        // console.log(new Date);
         try {
-            await checkTableExist();
+            // await checkTableExist();
             const getData = await DataController.getPhoneNumber();
             if (getData.length > 0) {
                 const getValidPhone = await validatePhone.isPhoneNumber(getData);
                 for (const phone of getValidPhone) {
-                    if (phone.TYPE_SMS === 0) {
+                    console.log(phone);
+                    // if (phone.TYPE_SMS === 0) {
                         await updateAfterSend(phone);
-                    } else {
-                        await updateAfterSendCampaign(phone);
-                    }
+                    // } else {
+                    //     await updateAfterSendCampaign(phone);
+                    // }
                 }
             }
             resolve(true);
@@ -32,19 +33,19 @@ otpFunction = async function () {
     });
 };
 
-let updateAfterSendCampaign = async function (phone) {
-    try {
-        const sendSMSCamp = await sendCampaign(phone);
-        console.log(sendSMSCamp);
-        if (sendSMSCamp) {
-            await moveData(0, 1, phone)
-        } else {
-            await moveData(1, 1, phone)
-        }
-    } catch (err) {
-        logger.error(err);
-    }
-};
+// let updateAfterSendCampaign = async function (phone) {
+//     try {
+//         const sendSMSCamp = await sendCampaign(phone);
+//         console.log(sendSMSCamp);
+//         if (sendSMSCamp) {
+//             await moveData(0, 1, phone)
+//         } else {
+//             await moveData(1, 1, phone)
+//         }
+//     } catch (err) {
+//         logger.error(err);
+//     }
+// };
 
 let updateAfterSend = async function (phone) {
     try {
@@ -52,10 +53,9 @@ let updateAfterSend = async function (phone) {
         console.log(result);
         if (result) {
             console.log("---------------------------insert+update+delete-------------------------------");
-            await moveData(0, 1, phone);
+            await DataController.updateSCRP_MOD_CD(phone.PHONE);
         } else {
             console.log("---------------------------insert+update+delete-------------------------------");
-            await moveData(1, 1, phone);
         }
     } catch (err) {
         logger.error(err);
@@ -64,76 +64,67 @@ let updateAfterSend = async function (phone) {
     }
 };
 
-let moveData = async function (rslt, status, phone) {
-    try {
-        console.log('===================== update this phone ============================');
-        await DataController.updateRegisteredMSG(rslt, status, phone);
-        console.log('=======================get this phone===================');
-        const resultSelect = await DataController.getRow(phone);
-        console.log('=================== insert =========================');
-        const resultInsert = await DataController.insertMSG(resultSelect[0]);
-        console.log("---------------------------delete-------------------------------");
-        const resultDelete = await DataController.deleteMSG(phone);
-        console.log(resultDelete);
-    } catch (err) {
-        logger.error(err);
-    }
-};
+// let moveData = async function (rslt, status, phone) {
+//     try {
+//         console.log('===================== update this phone ============================');
+//         // console.log('=======================get this phone===================');
+//         // const resultSelect = await DataController.getRow(phone);
+//         // console.log('=================== insert =========================');
+//         // const resultInsert = await DataController.insertMSG(resultSelect[0]);
+//         // console.log("---------------------------delete-------------------------------");
+//         // const resultDelete = await DataController.deleteMSG(phone);
+//         // console.log(resultDelete);
+//     } catch (err) {
+//         logger.error(err);
+//     }
+// };
 
 let sendOTP = async function (phone) {
     try {
         console.log("========================= get auth for sending otp ==================");
         const getAuth = await OtpController.getAuth();
-        let base64data = Buffer.from(phone.MSG).toString('base64');
-        let otp = new otpDomain(getAuth.access_token, 'abcd', 'FTI', phone.PHONE, base64data);
-
+        let otp = new otpDomain(getAuth.access_token, 'abcd', 'FTI', phone.PHONE, phone.PHONE);
+        console.log(otp);
         const sendSMS = await OtpController.sendBrandNameOTP(otp);
-        if (sendSMS) {
-            console.log("---------------------------update success send-------------------------------");
-            await DataController.updateRegisteredMSG(0, 1, phone);
-        } else {
-            console.log("---------------------------update failed send-------------------------------");
-            await DataController.updateRegisteredMSG(1, 1, phone);
-        }
         return sendSMS;
     } catch (err) {
         logger.error(err);
     }
 };
 
-let checkTableExist = async function () {
-    try {
-        const tableCheck = await DataController.selectTable();
-        console.log(tableCheck);
-        if (tableCheck.length < 1) {
-            const tableCreate = await DataController.createTable();
-            console.log(tableCreate);
-        } else {
-            console.log('nothing to do');
-        }
-    } catch (e) {
-        logger.error(e);
-    }
-};
+// let checkTableExist = async function () {
+//     try {
+//         const tableCheck = await DataController.selectTable();
+//         console.log(tableCheck);
+//         if (tableCheck.length < 1) {
+//             const tableCreate = await DataController.createTable();
+//             console.log(tableCreate);
+//         } else {
+//             console.log('nothing to do');
+//         }
+//     } catch (e) {
+//         logger.error(e);
+//     }
+// };
 
-let sendCampaign = async function (phone) {
-    try {
-        console.log("========================= get auth for campaign ==================");
-        const getAuth = await CampaignController.getAuth();
-        const dateCampaign = dateService.formatDateForCampaign(phone.SEND_DATE);
-        let campaign = new campaignDomain(getAuth.access_token, 'abcd', 'Khuyen 27' + new Date, 'FTI', phone.MSG, dateCampaign, '20');
-
-        console.log("========================= create campaign ==================");
-        const createCampaign = await CampaignController.createCampaign(campaign, getAuth.access_token);
-
-        console.log("========================= send campaign ==================");
-        let brandName = new BrandNameAds(getAuth.access_token, 'abcde', createCampaign.CampaignCode, phone.PHONE);
-        const sendCampaign = await CampaignController.sendSMS(brandName);
-        console.log(sendCampaign);
-        return sendCampaign;
-    } catch (e) {
-        logger.error(e);
-    }
-};
+// let sendCampaign = async function (phone) {
+//     try {
+//         console.log("========================= get auth for campaign ==================");
+//         const getAuth = await CampaignController.getAuth();
+//         const dateCampaign = dateService.formatDateForCampaign(phone.SEND_DATE);
+//         let campaign = new campaignDomain(getAuth.access_token, 'abcd', 'Khuyen 27' + new Date, 'FTI', phone.MSG, dateCampaign, '20');
+//
+//         console.log("========================= create campaign ==================");
+//         const createCampaign = await CampaignController.createCampaign(campaign, getAuth.access_token);
+//
+//         console.log("========================= send campaign ==================");
+//         let brandName = new BrandNameAds(getAuth.access_token, 'abcde', createCampaign.CampaignCode, phone.PHONE);
+//         const sendCampaign = await CampaignController.sendSMS(brandName);
+//         console.log(sendCampaign);
+//         return sendCampaign;
+//     } catch (e) {
+//         logger.error(e);
+//     }
+// };
 
 module.exports = otpFunction;

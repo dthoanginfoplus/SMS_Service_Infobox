@@ -10,8 +10,8 @@ const moment = require('moment-timezone');
 let timeOutput = moment().tz("Asia/Bangkok").format();
 
 exports.getPhoneNumber = async function () {
-    let SELECT = 'SELECT*FROM MSG_TABLE';
-    let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1 FETCH NEXT 1 ROWS ONLY';
+    let SELECT = 'SELECT TEL_NO_MOBILE AS PHONE FROM TB_SCRPLOG ';
+    let WHERE = ` WHERE GDS_CD = 'S1003' AND SCRP_MOD_CD = '00' AND SCRP_STAT_CD = '01' AND AGR_FG = 'Y' AND LOGIN_PW is null FETCH NEXT 1 ROWS ONLY `;
     let sql = SELECT + WHERE;
     return await queryOracle(sql, params, optionSelect);
 
@@ -23,6 +23,14 @@ exports.updateRegisteredMSG = async function (RSLT, STATUS_SMS, phone) {
         ", RSLT = " + RSLT +
         ", STATUS_SMS = " + STATUS_SMS +
         " WHERE MSGKEY = '" + phone.MSGKEY + "'";
+    return await queryOracle(sql, params, optionCommit);
+};
+
+exports.updateSCRP_MOD_CD = async function(phone) {
+    let sql = ` UPDATE TB_SCRPLOG SET SCRP_MOD_CD = '05' WHERE TEL_NO_MOBILE = :phone `;
+    let params = {
+        phone
+    };
     return await queryOracle(sql, params, optionCommit);
 };
 
