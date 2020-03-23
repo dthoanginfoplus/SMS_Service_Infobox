@@ -8,8 +8,10 @@ async function queryOracel(sql, param, option) {
         connection = await oracledb.getConnection(dbconfig);
         let result = await connection.execute(
             sql, param, option);
-            logger.info(result);
             if(result.rows !== undefined){
+               if (result.rows[0]) {
+                logger.info(result);
+               }
                 return result.rows;
             }
             return result;

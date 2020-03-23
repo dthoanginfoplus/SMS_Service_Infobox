@@ -1,18 +1,21 @@
 var request = require('request');
 var logger = require('../config/logger');
+const config = require("../config/config");
+const urlGetAuth = config.URL_REQUEST_SANBOX + '/oauth2/token';
+const urlGetBrand = config.URL_REQUEST_SANBOX  + '/api/push-brandname-otp';
 let count = 0;
 
 exports.getAuth = function () {
     return new Promise(function(resolve, reject) {
         request.post(
-            'http://sandbox.sms.fpt.net/oauth2/token',
+            urlGetAuth,
             {
                 json: {
-                    grant_type: 'client_credentials',
-                    client_id: '124377fd94eff2C59988eE836d452eC23227252c',
-                    client_secret: 'fdBaba82bc08F9c080364bb563c5f1dfd098533eAf415625d83b19ad72CC0dC5D34c5bb2',
-                    scope: 'send_brandname_otp',
-                    session_id: '789dC48b88e54f58ece5939f14a'
+                    grant_type: config.jsonURL.grant_type,
+                    client_id: config.jsonURL.envi.sandbox.client_id,
+                    client_secret: config.jsonURL.envi.sandbox.client_secret,
+                    scope: config.jsonURL.scope,
+                    session_id: config.jsonURL.session_id
                 }
             },
             function (error, response, body) {
@@ -36,7 +39,7 @@ exports.getAuth = function () {
 exports.sendBrandNameOTP = async function (OTP_input) {
     return new Promise(function(resolve, reject) {
         request.post(
-            'http://sandbox.sms.fpt.net/api/push-brandname-otp',
+            urlGetBrand,
             {
                 json: {
                     access_token: OTP_input.access_token,

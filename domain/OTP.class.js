@@ -6,7 +6,7 @@ class OTP {
         this.session_id = session_id;
         this.BrandName = BrandName;
         this.Phone = Phone;
-        this.Message = Buffer.from(Message + MOBILE_WEB_LINK + Buffer.from(Phone).toString('base64')).toString('base64');
+        this.Message = Buffer.from(Message + MOBILE_WEB_LINK + Phone).toString('base64');
     }
 }
 
