@@ -11,7 +11,7 @@ let timeOutput = moment().tz("Asia/Bangkok").format();
 
 exports.getPhoneNumber = async function () {
     let SELECT = 'SELECT * FROM TB_SCRPLOG ';
-    let WHERE = ` WHERE GDS_CD = 'S1003' AND TRY_COUNT <= 3 AND SCRP_MOD_CD = '00' AND SCRP_STAT_CD = '01' AND AGR_FG = 'Y' AND LOGIN_PW is null FETCH NEXT 1 ROWS ONLY `;
+    let WHERE = ` WHERE GDS_CD = 'S1003' AND (TRY_COUNT <= 3 OR TRY_COUNT IS NULL) AND SCRP_MOD_CD = '00' AND SCRP_STAT_CD = '01' AND AGR_FG = 'Y' AND LOGIN_PW is null ORDER BY CASE WHEN SYS_DTIM IS NOT NULL THEN 1 ELSE 0 END DESC, SYS_DTIM DESC FETCH NEXT 1 ROWS ONLY `;
     let sql = SELECT + WHERE;
     return await queryOracle(sql, params, optionSelect);
 
